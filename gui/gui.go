@@ -1,0 +1,58 @@
+package gui
+
+import (
+	sidebar_view "hyprsettings/main/gui/views"
+	"os"
+
+	_ "embed"
+
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+)
+
+//go:embed styles/sidebar.css
+var sidebarCSS string
+
+func Create() {
+	app := gtk.NewApplication("tech.mpdev.hyprsettings", gio.ApplicationDefaultFlags)
+
+	app.ConnectActivate(func() {
+		activate(app)
+	})
+
+	if code := app.Run(os.Args); code != 0 {
+		os.Exit(code)
+	}
+}
+
+func activate(app *gtk.Application) {
+	gtk.StyleContextAddProviderForDisplay(
+		gdk.DisplayGetDefault(), LoadCss(sidebarCSS), gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+	)
+
+	appView := gtk.NewBox(gtk.OrientationHorizontal, 0)
+
+	appView.Append(sidebar_view.Get())
+
+
+	window := gtk.NewApplicationWindow(app)
+	window.SetTitle("HyprSettings")
+
+	window.SetChild(appView)
+	window.SetVisible(true)
+}
+
+func LoadCss(content string) *gtk.CSSProvider {
+	provider := gtk.NewCSSProvider()
+
+	provider.ConnectParsingError(func(sec *gtk.CSSSection, err error) {
+		loc := sec.StartLocation()
+
+		println("Error parsing CSS at line", loc.Lines())
+	})
+
+	provider.LoadFromString(content)
+
+	return provider
+}

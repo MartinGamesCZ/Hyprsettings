@@ -1,0 +1,86 @@
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/Wifx/gonetworkmanager"
+)
+
+type App struct {
+	ctx context.Context
+}
+
+type AccessPoint struct {
+	SSID string
+	Strength int
+}
+
+func NewApp() *App {
+	return &App{}
+}
+
+func (a *App) startup(ctx context.Context) {
+	a.ctx = ctx
+}
+
+func (a *App) ListNetworks() []AccessPoint {
+	nm, err := gonetworkmanager.NewNetworkManager()
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return nil
+	}
+
+	devices, err := nm.GetDevices()
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return nil
+	}
+
+	var aps []AccessPoint;
+
+	for _, device := range devices {
+		devtype, err := device.GetPropertyDeviceType()
+
+		if err != nil {
+			fmt.Println("Error:", err)
+			return nil
+		}
+
+		if devtype == gonetworkmanager.NmDeviceTypeWifi {
+			device, err := gonetworkmanager.NewDeviceWireless(device.GetPath())
+
+			if err != nil {
+				fmt.Println("Error:", err)
+				return nil
+			}
+
+			accesspoints, err := device.GetAccessPoints()
+
+			if err != nil {
+				fmt.Println("Error:", err)
+				return nil
+			}
+
+			for _, ap := range accesspoints {
+				ssid, err := ap.GetPropertySSID()
+
+				if err != nil {
+					fmt.Println("Error:", err)
+					return nil
+				}
+
+				strength, err := ap.GetPropertyStrength()
+
+				aps = append(aps, AccessPoint{
+					SSID: ssid,
+					Strength: int(strength),
+				})
+			}
+		}
+	}
+
+	return aps
+}

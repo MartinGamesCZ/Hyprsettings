@@ -1,0 +1,12 @@
+:root {
+  --sidebar-border-color: #ccc;
+}
+
+.sidebar {
+  border-right: 1px solid var(--sidebar-border-color);
+  padding: 1rem;
+}
+
+.sidebar-label {
+  font-size: 1.5rem;
+}
