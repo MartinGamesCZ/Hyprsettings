@@ -1,10 +1,14 @@
 import { app, BrowserWindow, ipcMain } from "electron";
-import { createRequire } from "node:module";
+//import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import Net from "./module/net";
+import Bluetooth from "./module/bluetooth";
 
-const require = createRequire(import.meta.url);
+const net = new Net();
+const ble = new Bluetooth();
+
+//const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The built directory structure
@@ -74,15 +78,25 @@ app.on("activate", () => {
 
 app.whenReady().then(createWindow);
 
-const net = new Net();
-
 ipcMain.handle("net-list", async () => {
   return await net.list();
 });
 
 ipcMain.handle(
   "net-connect",
-  async (event, ssid: string, password?: string) => {
+  async (_event, ssid: string, password?: string) => {
     return await net.connect(ssid, password);
   }
 );
+
+ipcMain.handle("ble-scan", async () => {
+  //ble.scan();
+
+  return "";
+});
+
+ipcMain.handle("ble-list", async () => {
+  const devices = await ble.scan();
+
+  return devices;
+});

@@ -1,5 +1,7 @@
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 import { app, BrowserWindow, ipcMain } from "electron";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path$1 from "node:path";
 import require$$0, { spawn } from "child_process";
@@ -144,7 +146,72 @@ class Net {
     });
   }
 }
-createRequire(import.meta.url);
+class Bluetooth {
+  constructor() {
+    __publicField(this, "scanProcess", null);
+  }
+  async list() {
+    return new Promise((r) => {
+      const proc = spawn("bash", [
+        "-c",
+        "bluetoothctl devices | cut -f2 -d' ' | while read uuid; do bluetoothctl info $uuid; done"
+      ]);
+      let buf = "";
+      proc.stdout.on("data", (d) => buf += d.toString());
+      proc.on("exit", () => r(this.parseBluetoothData(buf)));
+    });
+  }
+  async startScan() {
+    this.stopScan();
+    return new Promise((r) => {
+      this.scanProcess = spawn("bluetoothctl", ["scan", "on"]);
+      setTimeout(() => {
+        r(true);
+      }, 1e3);
+    });
+  }
+  stopScan() {
+    if (this.scanProcess) {
+      this.scanProcess.kill();
+      this.scanProcess = null;
+      spawn("bluetoothctl", ["scan", "off"]);
+    }
+  }
+  async scan(duration = 5e3) {
+    await this.startScan();
+    return new Promise(async (r) => {
+      setTimeout(async () => {
+        this.stopScan();
+        const devices = await this.list();
+        r(devices);
+      }, duration);
+    });
+  }
+  parseBluetoothData(data) {
+    const packets = data.split("\n");
+    let buf = [];
+    let deviceBlocks = [];
+    for (let i = 0; i < packets.length; i++) {
+      const packet = packets[i].trim();
+      if (packet == "") {
+        deviceBlocks.push(buf);
+        buf = [];
+        continue;
+      }
+      buf.push(packet);
+    }
+    const devices = deviceBlocks.map(
+      (device) => Object.fromEntries(
+        device.map(
+          (a, i) => i == 0 ? ["mac", a.split(" ")[1]] : a.split(":").map((b) => b.trim()).map((a2, i2) => i2 == 0 ? a2.toLowerCase() : a2)
+        )
+      )
+    );
+    return devices;
+  }
+}
+const net = new Net();
+const ble = new Bluetooth();
 const __dirname = path$1.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path$1.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -182,16 +249,22 @@ app.on("activate", () => {
   }
 });
 app.whenReady().then(createWindow);
-const net = new Net();
 ipcMain.handle("net-list", async () => {
   return await net.list();
 });
 ipcMain.handle(
   "net-connect",
-  async (event, ssid, password) => {
+  async (_event, ssid, password) => {
     return await net.connect(ssid, password);
   }
 );
+ipcMain.handle("ble-scan", async () => {
+  return "";
+});
+ipcMain.handle("ble-list", async () => {
+  const devices = await ble.scan();
+  return devices;
+});
 export {
   MAIN_DIST,
   RENDERER_DIST,

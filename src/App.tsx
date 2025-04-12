@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+//import { useEffect, useState } from "react";
+import Ble from "./components/pages/Ble";
 import Net from "./components/pages/Net";
 
 declare const ipcRenderer: any;
@@ -24,7 +25,7 @@ export default function App() {
         </div>
       </div>
       <div className="flex flex-col w-full h-full p-4">
-        <Net />
+        <Ble />
       </div>
     </div>
   );
