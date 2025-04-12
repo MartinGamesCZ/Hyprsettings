@@ -79,3 +79,10 @@ const net = new Net();
 ipcMain.handle("net-list", async () => {
   return await net.list();
 });
+
+ipcMain.handle(
+  "net-connect",
+  async (event, ssid: string, password?: string) => {
+    return await net.connect(ssid, password);
+  }
+);
