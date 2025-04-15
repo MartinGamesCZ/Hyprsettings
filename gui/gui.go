@@ -1,7 +1,8 @@
 package gui
 
 import (
-	sidebar_view "hyprsettings/main/gui/views"
+	sidebar_view "hyprsettings/gui/views"
+	"hyprsettings/gui/views/pages"
 	"os"
 
 	_ "embed"
@@ -13,6 +14,9 @@ import (
 
 //go:embed styles/sidebar.css
 var sidebarCSS string
+
+//go:embed styles/pages/wifi.css
+var wifiCSS string
 
 func Create() {
 	app := gtk.NewApplication("tech.mpdev.hyprsettings", gio.ApplicationDefaultFlags)
@@ -30,11 +34,14 @@ func activate(app *gtk.Application) {
 	gtk.StyleContextAddProviderForDisplay(
 		gdk.DisplayGetDefault(), LoadCss(sidebarCSS), gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
 	)
+	gtk.StyleContextAddProviderForDisplay(
+		gdk.DisplayGetDefault(), LoadCss(wifiCSS), gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+	)
 
 	appView := gtk.NewBox(gtk.OrientationHorizontal, 0)
 
 	appView.Append(sidebar_view.Get())
-
+	appView.Append(pages.GetWifiPage())
 
 	window := gtk.NewApplicationWindow(app)
 	window.SetTitle("HyprSettings")

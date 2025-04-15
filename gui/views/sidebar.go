@@ -3,6 +3,8 @@ package sidebar_view
 import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
+
+	"hyprsettings/config"
 )
 
 type MenuItem struct {
@@ -56,7 +58,7 @@ func createDivider() *gtk.Box {
 }
 
 func Get() *gtk.Box {
-	return GetConfigurable("HyprSettings", getDefaultSections(), "v1.0.0")
+	return GetConfigurable("HyprSettings", getDefaultSections(), config.GetVersion())
 }
 
 func GetConfigurable(title string, sections []SidebarSection, version string) *gtk.Box {

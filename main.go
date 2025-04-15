@@ -1,7 +1,7 @@
 package main
 
 import (
-	"hyprsettings/main/gui"
+	"hyprsettings/gui"
 )
 
 func main() {
