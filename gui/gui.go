@@ -40,11 +40,11 @@ func activate(app *gtk.Application) {
 
 	appView := gtk.NewBox(gtk.OrientationHorizontal, 0)
 
-	appView.Append(sidebar_view.Get())
-	appView.Append(pages.GetWifiPage())
-
 	window := gtk.NewApplicationWindow(app)
 	window.SetTitle("HyprSettings")
+
+	appView.Append(sidebar_view.Get())
+	appView.Append(pages.GetWifiPage(window))
 
 	window.SetChild(appView)
 	window.SetVisible(true)

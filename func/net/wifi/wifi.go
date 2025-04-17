@@ -1,6 +1,8 @@
 package wifi
 
 import (
+	"os/exec"
+
 	"github.com/Wifx/gonetworkmanager"
 )
 
@@ -38,6 +40,8 @@ func ListWifi() ([]WiFiNetwork, error) {
 				return nil, err
 			}
 
+			device.RequestScan()
+
 			nets, err := device.GetAccessPoints()
 
 			if err != nil {
@@ -57,8 +61,6 @@ func ListWifi() ([]WiFiNetwork, error) {
 					return nil, err
 				}
 
-				println("SSID:", ssid, "BSSID:", bssid)
-
 				networks = append(networks, WiFiNetwork{
 					SSID: ssid,
 					MAC:  bssid,
@@ -68,4 +70,38 @@ func ListWifi() ([]WiFiNetwork, error) {
 	}
 
 	return networks, nil
+}
+
+func FixConnectionBug(ssid string) error {
+	cmd := exec.Command("nmcli", "connection", "delete", ssid)
+
+	if err := cmd.Run(); err != nil {
+		println("Error deleting connection:", err)
+
+		return err
+	}
+
+	return nil
+}
+
+func ConnectToWifi(ssid string, password string, afterPatch bool) error {
+	cmd := exec.Command("nmcli", "device", "wifi", "connect", ssid)
+
+	if len(password) > 0 {
+		cmd = exec.Command("nmcli", "device", "wifi", "connect", ssid, "password", password)
+	}
+
+	if err := cmd.Run(); err != nil {
+		if !afterPatch && len(password) > 0 {
+			FixConnectionBug(ssid)
+
+			return ConnectToWifi(ssid, password, true)
+		}
+
+		println("Error connecting to WiFi:", err)
+
+		return err
+	}
+
+	return nil
 }
